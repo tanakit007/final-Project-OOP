@@ -96,6 +96,7 @@ export default function HouseSetup() {
         <section style={{ border: '1px solid #4CAF50', padding: '20px', borderRadius: '8px' }}>
           <h1>บ้านของคุณ: {house.name}</h1>
           <p><Link to="/expenses">ดูรายการค่าใช้จ่ายในบ้าน</Link></p>
+          <p><Link to="/duties">จัดการเวรประจำบ้าน</Link></p>
           <p>รหัสเชิญ: <strong>{house.invite_code}</strong></p>
           <h2>สมาชิก ({house.members.length})</h2>
           <ul>
