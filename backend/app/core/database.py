@@ -1,15 +1,15 @@
-from beanie import init_beanie
 from pymongo import AsyncMongoClient
+from beanie import init_beanie
 from app.core.config import settings
 from app.models.user import User
+from app.models.house import House  # <-- Import เพิ่ม
 
 async def init_db():
     client = AsyncMongoClient(settings.MONGODB_URL)
+    database = client.get_database("roommate_db")
     
-    # ดึง database ตามชื่อที่ตั้งไว้ใน MONGODB_URL หรือกำหนดชื่อเป็น "roommate_db"
-    database = client.get_database()
-    
+    # เพิ่ม House เข้าไปใน document_models
     await init_beanie(
         database=database,
-        document_models=[User]
+        document_models=[User, House]
     )
