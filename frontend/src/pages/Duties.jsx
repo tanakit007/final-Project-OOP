@@ -117,13 +117,13 @@ export default function Duties() {
   }
 
   if (loading) {
-    return <main style={{ maxWidth: '800px', margin: '30px auto', padding: '20px' }}>กำลังโหลดรายการเวร...</main>;
+    return <main className="app-page app-loading">กำลังโหลดรายการเวร...</main>;
   }
 
   return (
-    <main style={{ maxWidth: '800px', margin: '30px auto', padding: '20px' }}>
-      <header style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        <nav aria-label="เมนูหลัก" style={{ display: 'flex', gap: '12px' }}>
+    <main className="app-page">
+      <header className="app-header">
+        <nav className="app-nav" aria-label="เมนูหลัก">
           <Link to="/dashboard">กลับไปหน้าบ้าน</Link>
           <Link to="/expenses">ค่าใช้จ่าย</Link>
         </nav>
@@ -131,8 +131,11 @@ export default function Duties() {
         <button type="button" onClick={handleLogout}>ออกจากระบบ</button>
       </header>
 
-      <h1>เวรประจำบ้าน{house ? ` - ${house.name}` : ''}</h1>
-      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
+      <div className="page-intro">
+        <h1>เวรประจำบ้าน{house ? ` - ${house.name}` : ''}</h1>
+        <p>มอบหมายงานและติดตามความเรียบร้อยของบ้านร่วมกัน</p>
+      </div>
+      {error && <p className="alert" role="alert">{error}</p>}
 
       {!house ? (
         <section>
@@ -141,7 +144,7 @@ export default function Duties() {
         </section>
       ) : (
         <>
-          <section style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+          <section className="panel" style={{ marginBottom: '24px' }}>
             <h2>มอบหมายเวรใหม่</h2>
             <form onSubmit={handleCreate}>
               <label style={{ display: 'block', marginBottom: '12px' }}>
@@ -185,19 +188,19 @@ export default function Duties() {
             </form>
           </section>
 
-          <section>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <section className="panel">
+            <div className="section-heading">
               <h2>รายการเวร</h2>
               <button type="button" onClick={loadDuties}>รีเฟรช</button>
             </div>
             {duties.length === 0 ? (
               <p>ยังไม่มีรายการเวร เพิ่มงานแรกได้จากแบบฟอร์มด้านบน</p>
             ) : (
-              <ul style={{ listStyle: 'none', padding: 0 }}>
+              <ul className="card-list">
                 {duties.map((duty) => (
-                  <li key={duty.id} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', border: '1px solid #ddd', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                  <li key={duty.id} className={`duty-card${duty.is_completed ? ' duty-card--complete' : ''}`}>
                     <div>
-                      <strong style={{ textDecoration: duty.is_completed ? 'line-through' : 'none' }}>
+                      <strong className="duty-title" style={{ textDecoration: duty.is_completed ? 'line-through' : 'none' }}>
                         {duty.title}
                       </strong>
                       <p style={{ margin: '6px 0' }}>ผู้รับผิดชอบ: {duty.assigned_user_name}</p>

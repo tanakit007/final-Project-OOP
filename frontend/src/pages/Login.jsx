@@ -22,9 +22,9 @@ export default function Login() {
   }
 
   return (
-    <main style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+    <main className="auth-card">
       <h1>เข้าสู่ระบบ</h1>
-      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="alert" role="alert">{error}</p>}
       <form onSubmit={handleSubmit}>
         <label style={{ display: 'block', marginBottom: '12px' }}>
           อีเมล

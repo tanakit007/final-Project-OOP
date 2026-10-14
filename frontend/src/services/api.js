@@ -21,7 +21,20 @@ export const getMyHouseAPI = () => API.get('/houses/my-house');
 
 export const createExpenseAPI = (data) => API.post('/expenses', data);
 export const getExpensesAPI = () => API.get('/expenses');
-export const settleExpenseAPI = (expenseId) => API.post(`/expenses/${expenseId}/settle`);
+export const submitPaymentProofAPI = (expenseId, file) => {
+  const data = new FormData();
+  data.append('file', file);
+  return API.post(`/expenses/${expenseId}/payment-proof`, data);
+};
+export const confirmPaymentAPI = (expenseId, memberId) => (
+  API.post(`/expenses/${expenseId}/payment-proof/${memberId}/confirm`)
+);
+export const requestPaymentReplacementAPI = (expenseId, memberId, reason) => (
+  API.post(`/expenses/${expenseId}/payment-proof/${memberId}/request-replacement`, { reason })
+);
+export const getPaymentProofAPI = (expenseId, memberId) => (
+  API.get(`/expenses/${expenseId}/payment-proof/${memberId}`, { responseType: 'blob' })
+);
 
 // --- Duty APIs ---
 export const createDutyAPI = (data) => API.post('/duties', data);
