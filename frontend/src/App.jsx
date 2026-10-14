@@ -11,7 +11,7 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) {
-    return <p>กำลังโหลด...</p>;
+    return <main className="app-page app-loading">กำลังโหลด...</main>;
   }
 
   return user ? children : <Navigate to="/login" replace />;

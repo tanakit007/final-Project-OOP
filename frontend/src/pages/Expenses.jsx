@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import {
   createExpenseAPI,
+  confirmPaymentAPI,
+  getPaymentProofAPI,
   getExpensesAPI,
   getMyHouseAPI,
-  settleExpenseAPI,
+  requestPaymentReplacementAPI,
+  submitPaymentProofAPI,
 } from '../services/api';
 
 function errorMessage(error, fallback) {
@@ -35,7 +38,8 @@ export default function Expenses() {
   const [customSplits, setCustomSplits] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [settlingId, setSettlingId] = useState(null);
+  const [paymentActionId, setPaymentActionId] = useState(null);
+  const [replacementReasons, setReplacementReasons] = useState({});
   const [error, setError] = useState('');
 
   async function loadExpenses() {
@@ -115,30 +119,86 @@ export default function Expenses() {
     }
   }
 
-  async function handleSettle(expenseId) {
+  async function handleSubmitProof(expenseId, file) {
+    if (!file) return;
     setError('');
-    setSettlingId(expenseId);
+    setPaymentActionId(`${expenseId}:${user.id}`);
     try {
-      await settleExpenseAPI(expenseId);
+      const response = await submitPaymentProofAPI(expenseId, file);
       setExpenses((current) => current.map((expense) => (
         expense.id === expenseId
-          ? { ...expense, settled_users: [...expense.settled_users, user.id] }
+          ? response.data
           : expense
       )));
     } catch (requestError) {
-      setError(errorMessage(requestError, 'บันทึกการชำระเงินไม่สำเร็จ กรุณาลองอีกครั้ง'));
+      setError(errorMessage(requestError, 'ส่งหลักฐานการโอนไม่สำเร็จ กรุณาลองอีกครั้ง'));
     } finally {
-      setSettlingId(null);
+      setPaymentActionId(null);
+    }
+  }
+
+  async function handleConfirmPayment(expenseId, memberId) {
+    setError('');
+    setPaymentActionId(`${expenseId}:${memberId}`);
+    try {
+      const response = await confirmPaymentAPI(expenseId, memberId);
+      setExpenses((current) => current.map((expense) => (
+        expense.id === expenseId ? response.data : expense
+      )));
+    } catch (requestError) {
+      setError(errorMessage(requestError, 'ยืนยันการชำระเงินไม่สำเร็จ กรุณาลองอีกครั้ง'));
+    } finally {
+      setPaymentActionId(null);
+    }
+  }
+
+  async function handleRequestReplacement(expenseId, memberId) {
+    const actionId = `${expenseId}:${memberId}`;
+    const reason = replacementReasons[actionId]?.trim() || '';
+    if (reason.length < 5) {
+      setError('กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษรก่อนขอหลักฐานใหม่');
+      return;
+    }
+    setError('');
+    setPaymentActionId(actionId);
+    try {
+      const response = await requestPaymentReplacementAPI(expenseId, memberId, reason);
+      setExpenses((current) => current.map((expense) => (
+        expense.id === expenseId ? response.data : expense
+      )));
+      setReplacementReasons((current) => ({ ...current, [actionId]: '' }));
+    } catch (requestError) {
+      setError(errorMessage(requestError, 'ขอหลักฐานใหม่ไม่สำเร็จ กรุณาลองอีกครั้ง'));
+    } finally {
+      setPaymentActionId(null);
+    }
+  }
+
+  async function handleViewProof(expenseId, memberId) {
+    const proofWindow = window.open('', '_blank');
+    if (!proofWindow) {
+      setError('เบราว์เซอร์บล็อกหน้าต่างหลักฐาน กรุณาอนุญาตป๊อปอัปแล้วลองอีกครั้ง');
+      return;
+    }
+    proofWindow.document.title = 'กำลังโหลดหลักฐานการโอน...';
+    try {
+      const response = await getPaymentProofAPI(expenseId, memberId);
+      const proofUrl = URL.createObjectURL(response.data);
+      proofWindow.location.href = proofUrl;
+      window.setTimeout(() => URL.revokeObjectURL(proofUrl), 60_000);
+    } catch (requestError) {
+      proofWindow.close();
+      setError(errorMessage(requestError, 'เปิดหลักฐานการโอนไม่สำเร็จ กรุณาลองอีกครั้ง'));
     }
   }
 
   if (loading) {
-    return <main style={{ maxWidth: '800px', margin: '30px auto', padding: '20px' }}>กำลังโหลดรายการค่าใช้จ่าย...</main>;
+    return <main className="app-page app-loading">กำลังโหลดรายการค่าใช้จ่าย...</main>;
   }
 
   return (
-    <main style={{ maxWidth: '800px', margin: '30px auto', padding: '20px' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <main className="app-page">
+      <header className="app-header">
         <Link to="/dashboard">กลับไปหน้าบ้าน</Link>
         <Link to="/duties">จัดการเวร</Link>
         <span>เข้าสู่ระบบในชื่อ {user?.full_name || user?.email}</span>
@@ -153,17 +213,20 @@ export default function Expenses() {
         </button>
       </header>
 
-      <h1>ค่าใช้จ่ายในบ้าน{house ? ` - ${house.name}` : ''}</h1>
-      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
+      <div className="page-intro">
+        <h1>ค่าใช้จ่ายในบ้าน{house ? ` - ${house.name}` : ''}</h1>
+        <p>ติดตามรายการและแบ่งค่าใช้จ่ายของสมาชิกในบ้าน</p>
+      </div>
+      {error && <p className="alert" role="alert">{error}</p>}
 
       {!house ? (
-        <section>
+        <section className="empty-state">
           <p>กรุณาสร้างบ้านหรือเข้าร่วมบ้านก่อนเพิ่มค่าใช้จ่าย</p>
           <Link to="/dashboard">ตั้งค่าบ้าน</Link>
         </section>
       ) : (
         <>
-          <section style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+          <section className="panel" style={{ marginBottom: '24px' }}>
             <h2>เพิ่มค่าใช้จ่าย</h2>
             <form onSubmit={handleCreate}>
               <label style={{ display: 'block', marginBottom: '12px' }}>
@@ -230,17 +293,17 @@ export default function Expenses() {
             </form>
           </section>
 
-          <section>
+          <section className="panel">
             <h2>รายการค่าใช้จ่าย</h2>
             {expenses.length === 0 ? (
               <p>ยังไม่มีรายการค่าใช้จ่าย เพิ่มรายการแรกได้จากแบบฟอร์มด้านบน</p>
             ) : (
-              <ul style={{ listStyle: 'none', padding: 0 }}>
+              <ul className="card-list">
                 {expenses.map((expense) => {
                   const myShare = expense.splits[user?.id];
                   const isMyShareSettled = expense.settled_users.includes(user?.id);
                   return (
-                    <li key={expense.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                    <li key={expense.id} className="expense-card">
                       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '8px' }}>
                         <strong>{expense.title}</strong>
                         <strong>{formatAmount(expense.total_amount)}</strong>
@@ -255,25 +318,122 @@ export default function Expenses() {
                         {Object.entries(expense.splits).map(([memberId, amount]) => {
                           const member = house.members.find((candidate) => candidate.id === memberId);
                           const settled = expense.settled_users.includes(memberId);
+                          const proofSubmitted = expense.payment_proof_users?.includes(memberId);
+                          const replacementReason = expense.payment_rejection_reasons?.[memberId];
+                          const isCreator = expense.paid_by_id === user?.id;
                           return (
                             <li key={memberId}>
-                              {member?.full_name || 'สมาชิกในบ้าน'}: {formatAmount(amount)} — {settled ? 'ชำระแล้ว' : 'ยังไม่ชำระ'}
+                              <div className="expense-share">
+                                <span>
+                                  {member?.full_name || 'สมาชิกในบ้าน'}: {formatAmount(amount)} — {
+                                    settled ? 'ยืนยันแล้ว' : replacementReason
+                                      ? 'ขอหลักฐานใหม่'
+                                      : proofSubmitted ? 'ส่งหลักฐานแล้ว · รอยืนยัน' : 'ยังไม่ชำระ'
+                                  }
+                                </span>
+                                {replacementReason && (
+                                  <p className="payment-rejection-reason">
+                                    เหตุผลที่ขอหลักฐานใหม่: {replacementReason}
+                                  </p>
+                                )}
+                                {isCreator && proofSubmitted && !settled && (
+                                  <div className="payment-actions">
+                                    <button type="button" className="button-secondary" onClick={() => handleViewProof(expense.id, memberId)}>
+                                      ดูสลิป
+                                    </button>
+                                    {!replacementReason && (
+                                      <button
+                                        type="button"
+                                        disabled={paymentActionId === `${expense.id}:${memberId}`}
+                                        onClick={() => handleConfirmPayment(expense.id, memberId)}
+                                      >
+                                        {paymentActionId === `${expense.id}:${memberId}` ? 'กำลังยืนยัน...' : 'ยืนยันว่าได้รับเงินแล้ว'}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                                {isCreator && proofSubmitted && !settled && !replacementReason && (
+                                  <div className="replacement-request">
+                                    <label>
+                                      ขอให้ส่งสลิปใหม่ พร้อมระบุเหตุผล
+                                      <textarea
+                                        value={replacementReasons[`${expense.id}:${memberId}`] || ''}
+                                        onChange={(event) => setReplacementReasons((current) => ({
+                                          ...current,
+                                          [`${expense.id}:${memberId}`]: event.target.value,
+                                        }))}
+                                        minLength={5}
+                                        maxLength={500}
+                                        rows={2}
+                                        placeholder="เช่น ยอดเงินในสลิปไม่ตรงกับยอดที่ต้องชำระ"
+                                      />
+                                    </label>
+                                    <button
+                                      type="button"
+                                      className="button-secondary"
+                                      disabled={paymentActionId === `${expense.id}:${memberId}`}
+                                      onClick={() => handleRequestReplacement(expense.id, memberId)}
+                                    >
+                                      ขอหลักฐานใหม่
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </li>
                           );
                         })}
                       </ul>
                       {myShare !== undefined && (
                         isMyShareSettled ? (
-                          <p>คุณชำระส่วนแบ่งแล้ว ({formatAmount(myShare)})</p>
+                          <p>ส่วนแบ่งของคุณชำระแล้ว ({formatAmount(myShare)})</p>
                         ) : (
-                          <button
-                            type="button"
-                            disabled={settlingId === expense.id}
-                            onClick={() => handleSettle(expense.id)}
-                          >
-                            {settlingId === expense.id ? 'กำลังบันทึก...' : `ยืนยันว่าชำระส่วนแบ่ง ${formatAmount(myShare)} แล้ว`}
-                          </button>
+                          <label className="proof-upload">
+                            {expense.payment_rejection_reasons?.[user?.id]
+                              ? 'ส่งสลิปใหม่ตามคำขอ'
+                              : expense.payment_proof_users?.includes(user?.id)
+                              ? 'แนบสลิปใหม่ (รอผู้สร้างบิลยืนยัน)'
+                              : `แนบสลิปหลังโอน ${formatAmount(myShare)}`}
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,application/pdf"
+                              disabled={paymentActionId === `${expense.id}:${user?.id}`}
+                              onChange={(event) => {
+                                const [file] = event.target.files || [];
+                                if (file) handleSubmitProof(expense.id, file);
+                                event.target.value = '';
+                              }}
+                            />
+                            <small>รองรับ JPG, PNG, WEBP หรือ PDF ขนาดไม่เกิน 5 MB</small>
+                          </label>
                         )
+                      )}
+                      {expense.payment_history?.length > 0 && (
+                        <details className="payment-history">
+                          <summary>ประวัติการชำระเงิน ({expense.payment_history.length})</summary>
+                          <ol>
+                            {expense.payment_history.map((event, index) => {
+                              const actor = house.members.find((member) => member.id === event.actor_id);
+                              const member = house.members.find((candidate) => candidate.id === event.member_id);
+                              const description = event.action === 'submitted'
+                                ? 'ส่งหลักฐานการโอน'
+                                : event.action === 'replacement_requested'
+                                  ? 'ขอให้ส่งหลักฐานใหม่'
+                                  : 'ยืนยันการชำระเงิน';
+                              return (
+                                <li key={`${event.created_at}-${index}`}>
+                                  <span>
+                                    {actor?.full_name || 'สมาชิก'} {description}
+                                    {event.action !== 'submitted' && member ? ` ของ${member.full_name}` : ''}
+                                  </span>
+                                  <time dateTime={event.created_at}>
+                                    {new Date(event.created_at).toLocaleString('th-TH')}
+                                  </time>
+                                  {event.reason && <p>{event.reason}</p>}
+                                </li>
+                              );
+                            })}
+                          </ol>
+                        </details>
                       )}
                     </li>
                   );

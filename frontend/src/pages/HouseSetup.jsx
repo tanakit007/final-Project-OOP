@@ -77,31 +77,34 @@ export default function HouseSetup() {
   }
 
   if (loading) {
-    return <main style={{ maxWidth: '600px', margin: '30px auto', padding: '20px' }}>กำลังโหลดข้อมูลบ้าน...</main>;
+    return <main className="app-page app-loading">กำลังโหลดข้อมูลบ้าน...</main>;
   }
 
   return (
-    <main style={{ maxWidth: '600px', margin: '30px auto', padding: '20px' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <main className="app-page">
+      <header className="app-header">
         <span>เข้าสู่ระบบในชื่อ {user?.full_name || user?.email}</span>
         <button type="button" onClick={handleLogout}>ออกจากระบบ</button>
       </header>
 
       {loadingError ? (
-        <section role="alert" style={{ color: 'red' }}>
+        <section className="alert" role="alert">
           <p>{loadingError}</p>
           <button type="button" onClick={fetchHouse}>ลองอีกครั้ง</button>
         </section>
       ) : house ? (
-        <section style={{ border: '1px solid #4CAF50', padding: '20px', borderRadius: '8px' }}>
-          <h1>บ้านของคุณ: {house.name}</h1>
+        <section className="panel house-panel">
+          <div className="page-intro">
+            <h1>บ้านของคุณ: {house.name}</h1>
+            <p>จัดการสมาชิก ค่าใช้จ่าย และงานบ้านได้จากที่นี่</p>
+          </div>
           <p><Link to="/expenses">ดูรายการค่าใช้จ่ายในบ้าน</Link></p>
           <p><Link to="/duties">จัดการเวรประจำบ้าน</Link></p>
           <p>รหัสเชิญ: <strong>{house.invite_code}</strong></p>
           <h2>สมาชิก ({house.members.length})</h2>
-          <ul>
+          <ul className="member-list">
             {house.members.map((member) => (
-              <li key={member.id}>
+              <li className="member-row" key={member.id}>
                 <strong>{member.full_name}</strong> (@{member.username})
                 {member.promptpay_no ? ` - พร้อมเพย์: ${member.promptpay_no}` : ''}
               </li>
@@ -110,12 +113,14 @@ export default function HouseSetup() {
         </section>
       ) : (
         <section>
-          <h1>ตั้งค่าบ้านของคุณ</h1>
+          <div className="page-intro">
+            <h1>ตั้งค่าบ้านของคุณ</h1>
           <p>สร้างบ้านใหม่หรือเข้าร่วมบ้านด้วยรหัสเชิญ</p>
-          {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
+          </div>
+          {error && <p className="alert" role="alert">{error}</p>}
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '20px' }}>
-            <form onSubmit={handleCreate} style={{ flex: '1 1 240px', border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
+            <form className="panel" onSubmit={handleCreate} style={{ flex: '1 1 240px' }}>
               <h2>สร้างบ้าน</h2>
               <input
                 aria-label="ชื่อบ้าน"
@@ -130,7 +135,7 @@ export default function HouseSetup() {
               </button>
             </form>
 
-            <form onSubmit={handleJoin} style={{ flex: '1 1 240px', border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
+            <form className="panel" onSubmit={handleJoin} style={{ flex: '1 1 240px' }}>
               <h2>เข้าร่วมบ้าน</h2>
               <input
                 aria-label="รหัสเชิญ"
