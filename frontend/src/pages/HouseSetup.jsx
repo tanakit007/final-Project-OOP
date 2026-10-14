@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { createHouseAPI, getMyHouseAPI, joinHouseAPI } from '../services/api';
 
@@ -32,9 +32,7 @@ export default function HouseSetup() {
         logout();
         navigate('/login', { replace: true });
       } else {
-        setLoadingError(
-          getErrorMessage(requestError, 'Could not load your house. Check your connection and try again.')
-        );
+        setLoadingError(getErrorMessage(requestError, 'โหลดข้อมูลบ้านไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง'));
       }
     } finally {
       setLoading(false);
@@ -53,7 +51,7 @@ export default function HouseSetup() {
       const response = await createHouseAPI({ name: houseName });
       setHouse(response.data);
     } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Could not create the house. Please try again.'));
+      setError(getErrorMessage(requestError, 'สร้างบ้านไม่สำเร็จ กรุณาลองอีกครั้ง'));
     } finally {
       setSubmitting(false);
     }
@@ -67,7 +65,7 @@ export default function HouseSetup() {
       const response = await joinHouseAPI({ invite_code: inviteCode });
       setHouse(response.data);
     } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Could not join the house. Check the invite code and try again.'));
+      setError(getErrorMessage(requestError, 'เข้าร่วมบ้านไม่สำเร็จ กรุณาตรวจสอบรหัสเชิญแล้วลองอีกครั้ง'));
     } finally {
       setSubmitting(false);
     }
@@ -79,67 +77,70 @@ export default function HouseSetup() {
   }
 
   if (loading) {
-    return <main style={{ maxWidth: '600px', margin: '30px auto', padding: '20px' }}>Loading your house...</main>;
+    return <main style={{ maxWidth: '600px', margin: '30px auto', padding: '20px' }}>กำลังโหลดข้อมูลบ้าน...</main>;
   }
 
   return (
     <main style={{ maxWidth: '600px', margin: '30px auto', padding: '20px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <span>Signed in as {user?.full_name || user?.email}</span>
-        <button type="button" onClick={handleLogout}>Log out</button>
+        <span>เข้าสู่ระบบในชื่อ {user?.full_name || user?.email}</span>
+        <button type="button" onClick={handleLogout}>ออกจากระบบ</button>
       </header>
 
       {loadingError ? (
         <section role="alert" style={{ color: 'red' }}>
           <p>{loadingError}</p>
-          <button type="button" onClick={fetchHouse}>Try again</button>
+          <button type="button" onClick={fetchHouse}>ลองอีกครั้ง</button>
         </section>
       ) : house ? (
         <section style={{ border: '1px solid #4CAF50', padding: '20px', borderRadius: '8px' }}>
-          <h1>Your house: {house.name}</h1>
-          <p>Invite code: <strong>{house.invite_code}</strong></p>
-          <h2>Members ({house.members.length})</h2>
+          <h1>บ้านของคุณ: {house.name}</h1>
+          <p><Link to="/expenses">ดูรายการค่าใช้จ่ายในบ้าน</Link></p>
+          <p>รหัสเชิญ: <strong>{house.invite_code}</strong></p>
+          <h2>สมาชิก ({house.members.length})</h2>
           <ul>
             {house.members.map((member) => (
               <li key={member.id}>
                 <strong>{member.full_name}</strong> (@{member.username})
-                {member.promptpay_no ? ` - PromptPay: ${member.promptpay_no}` : ''}
+                {member.promptpay_no ? ` - พร้อมเพย์: ${member.promptpay_no}` : ''}
               </li>
             ))}
           </ul>
         </section>
       ) : (
         <section>
-          <h1>Set up your house</h1>
-          <p>Create a house or join one using an invite code.</p>
+          <h1>ตั้งค่าบ้านของคุณ</h1>
+          <p>สร้างบ้านใหม่หรือเข้าร่วมบ้านด้วยรหัสเชิญ</p>
           {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '20px' }}>
             <form onSubmit={handleCreate} style={{ flex: '1 1 240px', border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
-              <h2>Create a house</h2>
+              <h2>สร้างบ้าน</h2>
               <input
-                placeholder="House name"
+                aria-label="ชื่อบ้าน"
+                placeholder="ชื่อบ้าน"
                 value={houseName}
                 onChange={(event) => setHouseName(event.target.value)}
                 required
-                style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
+                style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }}
               />
               <button type="submit" disabled={submitting} style={{ width: '100%', padding: '10px' }}>
-                {submitting ? 'Please wait...' : 'Create house'}
+                {submitting ? 'กรุณารอสักครู่...' : 'สร้างบ้าน'}
               </button>
             </form>
 
             <form onSubmit={handleJoin} style={{ flex: '1 1 240px', border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
-              <h2>Join a house</h2>
+              <h2>เข้าร่วมบ้าน</h2>
               <input
-                placeholder="Invite code"
+                aria-label="รหัสเชิญ"
+                placeholder="รหัสเชิญ"
                 value={inviteCode}
                 onChange={(event) => setInviteCode(event.target.value)}
                 required
-                style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
+                style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }}
               />
               <button type="submit" disabled={submitting} style={{ width: '100%', padding: '10px' }}>
-                {submitting ? 'Please wait...' : 'Join house'}
+                {submitting ? 'กรุณารอสักครู่...' : 'เข้าร่วมบ้าน'}
               </button>
             </form>
           </div>

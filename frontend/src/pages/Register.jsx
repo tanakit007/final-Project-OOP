@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { registerAPI } from '../services/api';
-import { useNavigate, Link } from 'react-router-dom';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -8,35 +8,36 @@ export default function Register() {
     email: '',
     password: '',
     full_name: '',
-    promptpay_no: ''
+    promptpay_no: '',
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError('');
     try {
       await registerAPI(formData);
-      alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+      alert('สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ');
       navigate('/login');
-    } catch (err) {
-      setError(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองอีกครั้ง');
     }
-  };
+  }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2>สมัครสมาชิก</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <main style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <h1>สมัครสมาชิก</h1>
+      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
-        <input placeholder="Username" required onChange={(e) => setFormData({ ...formData, username: e.target.value })} style={{ width: '100%', marginBottom: '10px' }} />
-        <input placeholder="Email" type="email" required onChange={(e) => setFormData({ ...formData, email: e.target.value })} style={{ width: '100%', marginBottom: '10px' }} />
-        <input placeholder="Password" type="password" required onChange={(e) => setFormData({ ...formData, password: e.target.value })} style={{ width: '100%', marginBottom: '10px' }} />
-        <input placeholder="ชื่อ-นามสกุล" required onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} style={{ width: '100%', marginBottom: '10px' }} />
-        <input placeholder="เบอร์ PromptPay (ถ้ามี)" onChange={(e) => setFormData({ ...formData, promptpay_no: e.target.value })} style={{ width: '100%', marginBottom: '10px' }} />
-        <button type="submit" style={{ width: '100%', padding: '10px' }}>Register</button>
+        <input aria-label="ชื่อผู้ใช้" placeholder="ชื่อผู้ใช้" autoComplete="username" required onChange={(event) => setFormData({ ...formData, username: event.target.value })} style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }} />
+        <input aria-label="อีเมล" placeholder="อีเมล" type="email" autoComplete="email" required onChange={(event) => setFormData({ ...formData, email: event.target.value })} style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }} />
+        <input aria-label="รหัสผ่าน" placeholder="รหัสผ่าน" type="password" autoComplete="new-password" required onChange={(event) => setFormData({ ...formData, password: event.target.value })} style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }} />
+        <input aria-label="ชื่อ-นามสกุล" placeholder="ชื่อ-นามสกุล" autoComplete="name" required onChange={(event) => setFormData({ ...formData, full_name: event.target.value })} style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }} />
+        <input aria-label="เบอร์พร้อมเพย์ (ถ้ามี)" placeholder="เบอร์พร้อมเพย์ (ถ้ามี)" onChange={(event) => setFormData({ ...formData, promptpay_no: event.target.value })} style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }} />
+        <button type="submit" style={{ width: '100%', padding: '10px' }}>สมัครสมาชิก</button>
       </form>
       <p>มีบัญชีอยู่แล้ว? <Link to="/login">เข้าสู่ระบบ</Link></p>
-    </div>
+    </main>
   );
 }

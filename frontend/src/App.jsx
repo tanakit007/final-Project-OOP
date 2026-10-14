@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import HouseSetup from './pages/HouseSetup';
+import Expenses from './pages/Expenses';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -9,7 +10,7 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <p>กำลังโหลด...</p>;
   }
 
   return user ? children : <Navigate to="/login" replace />;
@@ -28,6 +29,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <HouseSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/expenses"
+            element={
+              <ProtectedRoute>
+                <Expenses />
               </ProtectedRoute>
             }
           />
