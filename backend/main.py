@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import init_db
 from app.routers import auth
+from app.routers import house
 
 app = FastAPI(title="Roommate Expense API")
 
@@ -19,6 +20,7 @@ async def on_startup():
     await init_db()
 
 app.include_router(auth.router)
+app.include_router(house.router)
 
 @app.get("/")
 def read_root():

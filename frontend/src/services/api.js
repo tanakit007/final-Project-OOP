@@ -16,4 +16,8 @@ API.interceptors.request.use((config) => {
 export const loginAPI = (data) => API.post('/auth/login', data);
 export const registerAPI = (data) => API.post('/auth/register', data);
 
+export const createHouseAPI = (data) => API.post('/houses/create', data);
+export const joinHouseAPI = (data) => API.post('/houses/join', data);
+export const getMyHouseAPI = () => API.get('/houses/my-house');
+
 export default API;
