@@ -1,15 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import init_db
-from app.routers import auth
-from app.routers import house
+from app.routers import auth, house, expense  # <-- Import expense เพิ่ม
 
 app = FastAPI(title="Roommate Expense API")
 
-# ตั้งค่า CORS สำหรับเชื่อมต่อ React
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ปรับเป็น URL ของ Vercel เมื่อ Deploy
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,6 +19,7 @@ async def on_startup():
 
 app.include_router(auth.router)
 app.include_router(house.router)
+app.include_router(expense.router)
 
 @app.get("/")
 def read_root():
