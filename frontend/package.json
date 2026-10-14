@@ -1,0 +1,19 @@
+{
+  "name": "roommate-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.4"
+  }
+}
