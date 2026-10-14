@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import HouseSetup from './pages/HouseSetup';
 import Expenses from './pages/Expenses';
+import Duties from './pages/Duties';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -37,6 +38,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Expenses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/duties"
+            element={
+              <ProtectedRoute>
+                <Duties />
               </ProtectedRoute>
             }
           />

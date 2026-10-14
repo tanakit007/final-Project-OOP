@@ -140,6 +140,7 @@ export default function Expenses() {
     <main style={{ maxWidth: '800px', margin: '30px auto', padding: '20px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <Link to="/dashboard">กลับไปหน้าบ้าน</Link>
+        <Link to="/duties">จัดการเวร</Link>
         <span>เข้าสู่ระบบในชื่อ {user?.full_name || user?.email}</span>
         <button
           type="button"
